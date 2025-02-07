@@ -6,15 +6,17 @@ from vector_db import NormalizedVectorDatabase
 from langchain_huggingface import HuggingFaceEmbeddings
 import gradio as gr
 import pandas as pd
+import torch
 
 # LOAD ENVIRONMENT VARIABLES AND PARAMETERS
 load_dotenv()
 transcript_savepath = 'filtered_vid_ts.json'
 vectordb_index_savepath = 'faiss_renorm_index.bin'
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 # LOAD EMBEDDING MODEL AND VECTOR DATABASE
 embedder = HuggingFaceEmbeddings(model_name='NovaSearch/stella_en_1.5B_v5',
-                                model_kwargs={'device': 'cuda'},
+                                model_kwargs={'device': device},
                                 encode_kwargs={'convert_to_numpy' : True}
                                 )
 
