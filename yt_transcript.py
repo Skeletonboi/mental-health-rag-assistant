@@ -14,10 +14,11 @@ class YoutubeTranscriptRetriever():
     def get_upload_id(self):
         upload_id_url = f'https://www.googleapis.com/youtube/v3/channels?id={self.CHANNEL_ID}&key={self.YT_API_KEY}&part=contentDetails'
         try:
-            UPLOAD_ID = requests.get(upload_id_url).json()['items'][0]['contentDetails']['relatedPlaylists']['uploads']
+            self.UPLOAD_ID = requests.get(upload_id_url).json()['items'][0]['contentDetails']['relatedPlaylists']['uploads']
         except Exception as e:
             print('Error retrieving upload ID')
-        return UPLOAD_ID
+            return
+        return self.UPLOAD_ID
 
     def get_video_ids(self):
         init_vid_url = f'https://www.googleapis.com/youtube/v3/playlistItems?playlistId={self.UPLOAD_ID}&key={self.YT_API_KEY}&part=snippet&maxResults=50'
@@ -25,13 +26,13 @@ class YoutubeTranscriptRetriever():
 
         vids = []
         n_video_ids = len(page_details.json()['items'])
-        vids += [{'title': vid['snippet']['title'], 'videoId': vid['snippet']['resourceId']['videoId']} for vid in x.json()['items']]
+        vids += [{'title': vid['snippet']['title'], 'videoId': vid['snippet']['resourceId']['videoId']} for vid in page_details.json()['items']]
 
         while 'nextPageToken' in page_details.json():
             next_page_token = page_details.json()['nextPageToken']
             page_details = requests.get(init_vid_url + f"&pageToken={next_page_token}")
             n_video_ids += len(page_details.json()['items'])
-            vids += [{'title': vid['snippet']['title'], 'videoId': vid['snippet']['resourceId']['videoId']} for vid in x.json()['items']]
+            vids += [{'title': vid['snippet']['title'], 'videoId': vid['snippet']['resourceId']['videoId']} for vid in page_details.json()['items']]
         return vids, n_video_ids
 
     def get_transcripts(self, vids, transcript_savepath):
@@ -60,9 +61,15 @@ class YoutubeTranscriptRetriever():
 
 
 if __name__ == '__main__':
+    import sys
     # Load API keys
     load_dotenv()
     YT_API_KEY = os.getenv('YT_API_KEY')
-    CHANNEL_ID = 'UClHVl2N3jPEbkNJVx-ItQIQ'
+    # CHANNEL_ID = 'UClHVl2N3jPEbkNJVx-ItQIQ' # HealthyGamerGG YT CHANNEL ID
+    CHANNEL_ID = sys.argv[1]
+    transcript_savepath = sys.argv[2]
 
-    yt_transcript_retriever = YoutubeTranscriptRetriever(YT_API_KEY, CHANNEL_ID)
+    yt_retriever = YoutubeTranscriptRetriever(YT_API_KEY, CHANNEL_ID)
+    yt_retriever.get_upload_id()
+    vids, _ = yt_retriever.get_video_ids()
+    transcripts = yt_retriever.get_transcripts(vids, transcript_savepath)
