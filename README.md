@@ -1,6 +1,8 @@
 # mental-health-rag-assistant
 
-#### Ask questions to a LLM with detailed up-to-date knowledge from the entire HealthyGamerGG Youtube Channel.
+### Ask questions to a LLM with detailed up-to-date knowledge from the entire HealthyGamerGG Youtube Channel.
+### Currently hosted on HuggingFace Spaces at: https://huggingface.co/spaces/Skeletonboy/healthygamer-rag-assistant
+
 #### This code repo contains:
 - **yt-transcript.py** - automatic video transcript scraper for all uploads of any Youtube channel
 - **vector_db.py** - FAISS vector store wrapper to use custom normalized embeddings
