@@ -1,10 +1,15 @@
+import os
 import requests
 from openai import OpenAI
 import json
 import matplotlib.pyplot as plt
+from dotenv import load_dotenv
 
 class TranscriptProcessor():
-    def __init__(self, vids=None, transcript_savepath=None):
+    def __init__(self, **transcripts):
+        vids = transcripts.get('vids', None)
+        transcript_savepath = transcripts.get('transcript_savepath', None)
+
         if not vids and not transcript_savepath:
             raise Exception('No transcripts or savepath provided')
 
@@ -38,16 +43,18 @@ class TranscriptProcessor():
         # plt.savefig('transcript_lengths.png')
         return self.filtered_vids
     
-    def save_filtered_transcripts(self, savepath):
+    def save_to_file(self, savepath, vids=None):
+        if not vids:
+            vids = self.filtered_vids
         with open(savepath, 'w') as file:
-            json.dump(self.filtered_vids, file)
+            json.dump(vids, file)
         file.close()
         return
 
 
 class TranscriptSummarizer(TranscriptProcessor):
-    def __init__(self, vids=None, transcript_savepath=None):
-        super().__init__(vids=vids, transcript_savepath=transcript_savepath)
+    def __init__(self, **transcripts):
+        super().__init__(**transcripts)
         self.default_dev_prompt = \
             'You are a transcript summarizer, your purpose is to provide a detailed summary of a transcript without introducing any of your own bias \
             or subjectivity. Shorten the transcript while keeping all important information, including main topics, research findings, their connections \
@@ -55,7 +62,11 @@ class TranscriptSummarizer(TranscriptProcessor):
             and how the conclusions are logically derived. Do not try to be concise. Do not interject your own opinion. Do not structure the output in any \
             way with titles or bullet points.'
     
-    def summarize_transcripts(self, vids, model_name='gpt-4o-mini', dev_prompt=self.default_dev_prompt):
+    def summarize_transcripts(self, vids, model_name='gpt-4o-mini', dev_prompt=None):
+        client = OpenAI(api_key = os.getenv('OPENAI_API_KEY'))
+
+        if not dev_prompt:
+            dev_prompt = self.default_dev_prompt
         for i, vid in enumerate(vids):
             print('Processing video ', i, vid['title'])
             try:
@@ -68,8 +79,20 @@ class TranscriptSummarizer(TranscriptProcessor):
                 )
             except:
                 print('Failed to process video ', i)
-                break
+                continue
             vid['summary'] = completion.choices[0].message.content
 
         self.filtered_vids = vids
         return vids
+    
+if __name__ == '__main__':
+    import sys
+    load_dotenv()
+    transcript_savepath = sys.argv[1]
+
+    ts_operator = TranscriptSummarizer(transcript_savepath=transcript_savepath)
+
+    vids = ts_operator.remove_missing_transcripts(ts_operator.vids)
+    vids = ts_operator.filter_transcripts(vids)
+    summaries = ts_operator.summarize_transcripts(vids)
+    ts_operator.save_to_file(transcript_savepath, summaries) 
