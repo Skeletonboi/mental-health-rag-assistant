@@ -1,6 +1,13 @@
 # mental-health-rag-assistant
 
 #### Ask questions to a LLM with detailed up-to-date knowledge from the entire HealthyGamerGG Youtube Channel.
+#### This code repo contains:
+<ul>
+    <li>**yt-transcript.py** - automatic video transcript scraper for all uploads of any Youtube channel**</li>
+    <li>**vector_db.py** - FAISS vector store wrapper to use custom normalized embeddings</li>
+    <li>**transcript_ops.py** - transcript summarizer using third-party LLMs</li>
+    <li>**app.py** - deploy RAG question-answerer as Gradio app</li>
+</ul>
 
 Each video from the HealthyGamerGG Youtube channel is summarized in detail using GPT-4o, and embedded using [stella_en_1.5B_v5](https://huggingface.co/NovaSearch/stella_en_1.5B_v5) before being passed into a FAISS vector index for quick similarity-searching.
 
