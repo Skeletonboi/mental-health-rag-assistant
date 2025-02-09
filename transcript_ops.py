@@ -89,10 +89,11 @@ if __name__ == '__main__':
     import sys
     load_dotenv()
     transcript_savepath = sys.argv[1]
+    new_savepath = sys.argv[2]
 
     ts_operator = TranscriptSummarizer(transcript_savepath=transcript_savepath)
 
     vids = ts_operator.remove_missing_transcripts(ts_operator.vids)
     vids = ts_operator.filter_transcripts(vids)
     summaries = ts_operator.summarize_transcripts(vids)
-    ts_operator.save_to_file(transcript_savepath, summaries) 
+    ts_operator.save_to_file(new_savepath, summaries) 
