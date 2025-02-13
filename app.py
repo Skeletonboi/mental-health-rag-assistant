@@ -90,10 +90,3 @@ with gr.Blocks() as main:
 
 if __name__ == '__main__':
     main.launch(share=True)
-
-# if __name__ == '__main__':
-    # model_name = 'gpt-4o'
-    # transcript_savepath = 'filtered_vid_ts.json'
-    # vectordb_index_savepath = 'faiss_renorm_index.bin'
-    # response = main(model_name, transcript_savepath, vectordb_index_savepath)
-    # print(response)
