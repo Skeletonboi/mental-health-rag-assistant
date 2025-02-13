@@ -30,7 +30,7 @@ def retrieve_context(query, k):
     D, I = vdb.search(query, k)
     D, I = D.flatten(), I.flatten()
     
-    retrieved_context = "".join(' <CONTEXT TITLE> ' + vids[idx]['title'] + ' <CONTEXT SUMMARY> ' + vids[idx]['summary'] + ' \n\n\n ' for idx in I)
+    retrieved_context = " \n\n\n ".join(' <CONTEXT TITLE> ' + vids[idx]['title'] + ' <CONTEXT SUMMARY> ' + vids[idx]['summary'] for idx in I)
     retrieved_titles = [vids[idx]['title'] for idx in I]
     return {'retrieved_context': retrieved_context, 'retrieved_titles': retrieved_titles, 'embedding_dists': D}
 
@@ -62,7 +62,9 @@ def buildInfoTable(state):
 # GRADIO MAIN
 with gr.Blocks() as main:
     example_query_1 = 'What is the ego? How does it manifest in healthy and unhealthy ways? What are some strategies to manage it? What are the effects of it on mental health?'
-    example_query_2 = 'How do I find a girlfriend? What are some traumas to look out for? Looking for relationship advice as a mid 20s male, what are some practical tips? What mindset should I use to approach with all this red-pill / black-pill stuff on the internet?'
+    example_query_2 = 'What is the Sanskrit term Dr K uses for our purpose, meaning, to describe something that only we can do?'
+    example_query_3 = 'How do I find a partner? What are some traumas to look out for? Looking for relationship advice, what are some practical tips? What mindset should I use to approach with all this red-pill / black-pill stuff on the internet?'
+    
     state = gr.State({})
     query = gr.Textbox(label='Query', placeholder=example_query_1, value=example_query_1)
     k = gr.Slider(label='k', info='Number of retrieved documents', minimum=1, maximum=10, step=1, value=10)
