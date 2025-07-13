@@ -3,7 +3,9 @@ import requests
 from dotenv import load_dotenv
 from youtube_transcript_api import YouTubeTranscriptApi
 from youtube_transcript_api.formatters import TextFormatter
+from yt_scrape import get_transcript
 import json
+import asyncio
 
 class YoutubeTranscriptRetriever():
     def __init__(self, YT_API_KEY, CHANNEL_ID):
@@ -25,14 +27,18 @@ class YoutubeTranscriptRetriever():
         page_details = requests.get(init_vid_url)
 
         vids = []
-        n_video_ids = len(page_details.json()['items'])
-        vids += [{'title': vid['snippet']['title'], 'videoId': vid['snippet']['resourceId']['videoId']} for vid in page_details.json()['items']]
+        n_video_ids = 0
 
-        while 'nextPageToken' in page_details.json():
-            next_page_token = page_details.json()['nextPageToken']
-            page_details = requests.get(init_vid_url + f"&pageToken={next_page_token}")
+        while True:
             n_video_ids += len(page_details.json()['items'])
             vids += [{'title': vid['snippet']['title'], 'videoId': vid['snippet']['resourceId']['videoId']} for vid in page_details.json()['items']]
+
+            if 'nextPageToken' in page_details.json():
+                next_page_token = page_details.json()['nextPageToken']
+                page_details = requests.get(init_vid_url + f"&pageToken={next_page_token}")
+            else:
+                break
+
         return vids, n_video_ids
 
     def get_transcripts(self, vids, transcript_savepath):
@@ -43,15 +49,23 @@ class YoutubeTranscriptRetriever():
             if i % 10 == 0:
                 print(f'Processing video {i}')
             try:
-                ts = YouTubeTranscriptApi.get_transcript(vids[i]['videoId'], languages=['en'])
+                vid_id = vids[i]['videoId']
+                # ts = YouTubeTranscriptApi.get_transcript(vids[i]['videoId'], languages=['en'])
+                ts, url, is_english = asyncio.run(get_transcript(vid_id))
+
+                if not is_english:
+                    raise Exception(f'No english transcript available')
+                
+                print(f"Transcript Excerpt: {ts[:50]}..., Vid URL: {url}, Is English: {is_english}")
             except Exception as e:
                 vids.pop(i)
+                print(f'Error: {e}, Vid URL: {url}')
                 continue
-            txt_formatter = TextFormatter()
-            ts_txt = txt_formatter.format_transcript(ts).replace('\n', ' ')
-            vids[i]['transcript'] = ts_txt
+            # txt_formatter = TextFormatter()
+            # ts_txt = txt_formatter.format_transcript(ts).replace('\n', ' ')
+            vids[i]['transcript'] = ts
 
-            ts_len += len(ts_txt)
+            ts_len += len(ts)
             num_valid_vids += 1
 
         with open(transcript_savepath, 'w') as file:
@@ -65,11 +79,11 @@ if __name__ == '__main__':
     # Load API keys
     load_dotenv()
     YT_API_KEY = os.getenv('YT_API_KEY')
-    # CHANNEL_ID = 'UClHVl2N3jPEbkNJVx-ItQIQ' # HealthyGamerGG YT CHANNEL ID
     CHANNEL_ID = sys.argv[1]
+    # CHANNEL_ID = 'UClHVl2N3jPEbkNJVx-ItQIQ' # HealthyGamerGG YT CHANNEL ID FOR TESTING PURPOSES
     transcript_savepath = sys.argv[2]
 
     yt_retriever = YoutubeTranscriptRetriever(YT_API_KEY, CHANNEL_ID)
     yt_retriever.get_upload_id()
     vids, _ = yt_retriever.get_video_ids()
-    transcripts = yt_retriever.get_transcripts(vids, transcript_savepath)
+    transcripts, _ = yt_retriever.get_transcripts(vids, transcript_savepath)
